@@ -5,6 +5,7 @@ const passport = require("passport");
 const { mongoURI, cookieKey } = require("./config/keys");
 require("./services/passport");
 const authRouter = require("./routes/auth");
+const billingRouter = require("./routes/billing");
 
 const app = express();
 
@@ -15,6 +16,7 @@ mongoose.connect(mongoURI, {
   useFindAndModify: false
 });
 
+app.use(express.json());
 app.use(
   cookieSession({
     maxAge: 2592000000,
@@ -25,6 +27,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(authRouter);
+app.use(billingRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT);
