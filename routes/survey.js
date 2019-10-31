@@ -34,6 +34,14 @@ router.post("/api/surveys", requireLogin, requireCredits, async (req, res) => {
   }
 });
 
+router.get("/api/surveys", requireLogin, async (req, res) => {
+  const surveys = await Survey.find({ _user: req.user.id }).select({
+    recipients: 0
+  });
+
+  res.send(surveys);
+});
+
 router.get("/api/surveys/:surveyId/:choice", (req, res) => {
   res.send("Thanks for voting!");
 });
