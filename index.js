@@ -3,10 +3,13 @@ const cookieSession = require("cookie-session");
 const mongoose = require("mongoose");
 const passport = require("passport");
 const path = require("path");
+const compression = require("compression");
+
 const { mongoURI, cookieKey } = require("./config/keys");
 require("./services/passport");
 const authRouter = require("./routes/auth");
 const billingRouter = require("./routes/billing");
+const surveyRouter = require("./routes/survey");
 
 const app = express();
 
@@ -26,9 +29,11 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(compression());
 
 app.use(authRouter);
 app.use(billingRouter);
+app.use(surveyRouter);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("client/build"));
