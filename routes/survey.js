@@ -7,37 +7,48 @@ const Survey = require("../models/survey");
 const requireLogin = require("../middleware/requireLogin");
 const requireCredits = require("../middleware/requireCredits");
 const surveyCampaign = require("../services/surveyCampaign");
+const cleanCache = require("../middleware/cleanCache");
 
 const router = express.Router();
 
-router.post("/api/surveys", requireLogin, requireCredits, async (req, res) => {
-  const { title, subject, body, recipients } = req.body;
+router.post(
+  "/api/surveys",
+  requireLogin,
+  requireCredits,
+  cleanCache,
+  async (req, res) => {
+    const { title, subject, body, recipients } = req.body;
 
-  const survey = new Survey({
-    title,
-    subject,
-    body,
-    recipients: recipients.split(",").map(email => ({ email: email.trim() })),
-    _user: req.user.id,
-    dateSent: Date.now()
-  });
+    const survey = new Survey({
+      title,
+      subject,
+      body,
+      recipients: recipients
+        .split(",")
+        .map((email) => ({ email: email.trim() })),
+      _user: req.user.id,
+      dateSent: Date.now(),
+    });
 
-  try {
-    await surveyCampaign(subject, body, recipients, survey.id);
-    await survey.save();
-    req.user.credits -= 1;
-    await req.user.save();
+    try {
+      await surveyCampaign(subject, body, recipients, survey.id);
+      await survey.save();
+      req.user.credits -= 1;
+      await req.user.save();
 
-    res.send(req.user);
-  } catch (error) {
-    res.status(422).send(error);
+      res.send(req.user);
+    } catch (error) {
+      res.status(422).send(error);
+    }
   }
-});
+);
 
 router.get("/api/surveys", requireLogin, async (req, res) => {
-  const surveys = await Survey.find({ _user: req.user.id }).select({
-    recipients: 0
-  });
+  const surveys = await Survey.find({ _user: req.user.id })
+    .select({
+      recipients: 0,
+    })
+    .cache({ key: req.user.id });
 
   res.send(surveys);
 });
@@ -63,13 +74,13 @@ router.post("/api/surveys/webhooks", (req, res) => {
         {
           _id: surveyId,
           recipients: {
-            $elemMatch: { email, responded: false }
-          }
+            $elemMatch: { email, responded: false },
+          },
         },
         {
           $inc: { [choice]: 1 },
           $set: { "recipients.$.responded": true },
-          lastResponded: new Date()
+          lastResponded: new Date(),
         }
       ).exec();
     })

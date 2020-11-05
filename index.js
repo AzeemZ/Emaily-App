@@ -7,6 +7,7 @@ const compression = require("compression");
 
 const { mongoURI, cookieKey } = require("./config/keys");
 require("./services/passport");
+require("./services/cache");
 const authRouter = require("./routes/auth");
 const billingRouter = require("./routes/billing");
 const surveyRouter = require("./routes/survey");
@@ -17,14 +18,14 @@ mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
-  useFindAndModify: false
+  useFindAndModify: false,
 });
 
 app.use(express.json());
 app.use(
   cookieSession({
     maxAge: 2592000000,
-    keys: [cookieKey]
+    keys: [cookieKey],
   })
 );
 app.use(passport.initialize());
